@@ -1,0 +1,36 @@
+name: Aggiorna CSV da Google Sheet
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-csv:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clona il repository
+        uses: actions/checkout@v4
+
+      - name: Scarica CSV da Google Sheet
+        run: |
+          mkdir -p data
+          curl -L "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHVLopLKXErqwt8YOQBbUOTcYa7xNH7HmyT85pZpgQPQ88V7eYZFEY5IQ8T7uxMBH_dHsIF3wULWyY/pub?gid=1506514677&single=true&output=csv" -o data/poster.csv
+
+      - name: Commit se il CSV è cambiato
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add data/poster.csv
+
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica al CSV"
+          else
+            git commit -m "Aggiorna poster.csv da Google Sheet"
+            git push
+          fi
